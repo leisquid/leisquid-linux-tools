@@ -1,0 +1,5 @@
+[D-BUS Service]
+Name=com.example.Sample
+Exec=/usr/local/bin/sample-service
+User=root
+SystemdService=dbus-com.example.Sample.service
