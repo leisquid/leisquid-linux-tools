@@ -674,6 +674,66 @@ sudo grub2-mkconfig -o /boot/grub/grub.cfg
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
+### 5.6 如何判断当前系统是 UEFI 还是 Legacy
+
+| BIOS 引导过程 | 启动管理器过程 | 系统启动过程 |
+| :--: | :--: | :--: |
+| 不确定 | 不确定 | 不确定 |
+
+#### 5.6.1 固件 / 开机阶段
+
+- **看 BIOS 设置**：看 “Boot Mode” 显示 UEFI 还是 Legacy/CSM。
+- **看引导列表**：有的发行版 ISO 会提供两份菜单，带 `UEFI:` 前缀的就是 UEFI 模式启动的。
+
+#### 5.6.2 Bootloader（GRUB）阶段
+
+进了 GRUB 命令行或菜单都可以查：
+
+```grub
+echo $grub_platform
+```
+
+- 输出 **`efi`** → UEFI 模式启动
+- 输出 **`pc`** → Legacy BIOS 模式
+
+如果是 GRUB 命令行还能看变量：
+
+```grub
+set
+# 里面会出现 prefix=(hdX,gptY)/EFI/... 之类，UEFI 下路径走 EFI
+```
+
+#### 5.6.3 内核启动早期（initramfs / dmesg）
+
+进到 kernel 之后，dmesg 里会有 EFI 字样：
+
+```bash
+dmesg | grep -i efi
+```
+
+- 有 `EFI v2.x by ...`、`EFI memory map` 这类 → UEFI
+- 完全没 EFI 相关日志 → Legacy BIOS
+
+#### 5.6.4 用户态（进系统后，最常用）
+
+```bash
+ls /sys/firmware/efi
+```
+
+- **目录存在** → UEFI
+- **目录不存在** → Legacy BIOS
+
+**辅助验证**：
+
+```bash
+# UEFI 下能看到 efibootmgr 正常工作
+efibootmgr -v
+
+# 挂载点
+mount | grep efivars        # UEFI 才有 /sys/firmware/efi/efivars
+ls /boot/efi                # 看 ESP 是否挂上（不一定叫这个名）
+```
+
 ---
 
 以上。
